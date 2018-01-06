@@ -1,3 +1,4 @@
+//Master
 Requette sur themoviedb.org
 https://developers.themoviedb.org/3/getting-started/search-and-query-for-details
 
@@ -33,7 +34,7 @@ original_title like %the% or credits.cast.name=Matthew McConaughey
 db.getCollection('films').find({$or: [ {"original_title":/.*the.*/},{"credits.cast.name":"Matthew McConaughey"} ]})
 
 ============== Dev =============
-http://rico/search/   =>liste des n dernierajouté
+http://rico/search/   =>liste des n dernierajoutÃ©
 http://rico/search/query=Matrix => liste de tt ce qui macht avec  MAtrix
 	    search/cast=Keanu Reeves
 	    search/year=2001
