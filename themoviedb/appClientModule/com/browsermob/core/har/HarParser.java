@@ -7,11 +7,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 public class HarParser {
     private static ObjectMapper mapper = new ObjectMapper();
- 
-    /**
+    /**Rico HOHO
      * Parse a JSON HAR
      * 
-     * @param f a JSON file
+     * @param f a JSON file 
      * @return the HarLog representation
      * @throws IOException if file not found
      */
