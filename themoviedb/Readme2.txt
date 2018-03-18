@@ -13,7 +13,7 @@ https://api.themoviedb.org/3/search/movie?api_key=bd5b73151b4a5a2ac5b34aca8bfe55
 https://api.themoviedb.org/3/movie/603?api_key=bd5b73151b4a5a2ac5b34aca8bfe555a&append_to_response=credits,videos
 
 
-=============== Mongo 3 ==========
+=============== Mongo 4 ==========
 lancer cmd, puis : C:\Program Files\MongoDB\Server\3.4\bin>mongod
 puis eventuelemnt RobotMonGo
 db.getCollection('restaurants').find({})
