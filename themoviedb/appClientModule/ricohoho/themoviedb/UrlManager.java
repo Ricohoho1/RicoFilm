@@ -24,6 +24,7 @@ public class UrlManager {
 				URL url = new URL(sURL);
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod("GET");
+				conn.setRequestProperty("Accept-Charset", "UTF-8");
 				conn.setRequestProperty("Accept", "application/json");
 
 				if (conn.getResponseCode() != 200) {
@@ -32,10 +33,10 @@ public class UrlManager {
 				}
 
 				BufferedReader br = new BufferedReader(new InputStreamReader(
-					(conn.getInputStream())));
+					(conn.getInputStream()), "UTF-8"));
 
 				String output;
-				System.out.println("Output from Server .... \n");
+				//System.out.println("Output from Server .... \n");
 				while ((output = br.readLine()) != null) {
 					//System.out.println(output);
 					sReturn=sReturn+output+"\n";
