@@ -8,6 +8,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
+import com.mongodb.WriteResult;
 import com.mongodb.DBCursor;
 
 public class MongoManager {
@@ -20,22 +21,24 @@ public class MongoManager {
 	
 	public MongoManager(String dbMongoName) {
 		this.dbMongoName=dbMongoName;
-		this.mongo = new MongoClient("192.168.1.18", 27017);
+		this.mongo = new MongoClient("192.168.1.10", 27017);
 		this.db = mongo.getDB(dbMongoName);
 	}
 	
 	
-	public void insertJSON(String collectionName,DBObject  _DBObject) {
-		 try {
+	public String insertJSON(String collectionName,DBObject  _DBObject) {
+		String sreturn=null; 
+		try {
 			 DBCollection table = this.db.getCollection(collectionName);
 			 table.insert(_DBObject);
-				System.out.println("Done");
+			 //System.out.println("_DBObject="+_DBObject.get( "_id" ));
+			 sreturn =_DBObject.get( "_id" ).toString();
 		    //} catch (UnknownHostException e) {
 			//e.printStackTrace();
 		 } catch (MongoException e) {
 			e.printStackTrace();
 		 }
-		
+		return sreturn;
 	}
 	
 	//return lenb de ligne qui match
@@ -53,5 +56,10 @@ public class MongoManager {
 	public void updateDB(String collectionName,BasicDBObject query, BasicDBObject updateObj) {
 		DBCollection table = this.db.getCollection(collectionName);
 		table.update(query, updateObj);
+	}
+	
+	public void removeDB(String collectionName,BasicDBObject query) {
+		DBCollection table = this.db.getCollection(collectionName);
+		table.findAndRemove(query);
 	}
 }

@@ -28,41 +28,51 @@ import ricohoho.mongo.MongoManager;
 
 public class TheMovieDb {
 	
-	public List<Fichier> listeFichier=null;
-	String pathFilm = null;
+	//public List<Fichier> listeFichier=null;
+	//String pathFilm = null;
 	List<String> listeFilm=null;
 	public boolean MemoDb=false;
+	public boolean owerrideDB=false;
 	public boolean DownloadImage=false;
 	MongoManager mongoManager=null;
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		System.out.println("Extraction Information fichier films");
-		
+		System.out.println("--Extraction Information fichier films--");
+		String pathFilm = null;
 		TheMovieDb theMovieDb = new TheMovieDb();
 		if (args.length >0)
-			theMovieDb.pathFilm = args[0];
-			
+			pathFilm = args[0];			
 		else {
-			//theMovieDb.pathFilm = "F:\\Film\\2017\\201710\\";
-			theMovieDb.pathFilm = "C:\\tempo\\test\\";
+//			pathFilm = "C:\\tempo\\test\\";
 			theMovieDb.MemoDb=true;
-			theMovieDb.DownloadImage=true;
-			//theMovieDb.pathFilm = "\\\\nos-rico\\video\\Films\\2018\\201802\\";
-			//theMovieDb.pathFilm = "\\\\NOS-RICO\\video\\Films\\2016\\201608\\";
+			theMovieDb.owerrideDB=true;
+			theMovieDb.DownloadImage=false;
+			pathFilm = "\\\\nos-rico\\video\\Films\\2018\\";
+			pathFilm = "\\\\nos-rico\\video\\Films\\2018\\201802\\";
 		}
 		
 		if (theMovieDb.MemoDb==true) {
         	theMovieDb.mongoManager=new MongoManager("ricofilm");
         }
 		
-		
-		LogText logText = new LogText(theMovieDb.pathFilm,"log.txt");
+		theMovieDb.updateFilm(pathFilm);
+	}
+	
+	/**
+	 * 
+	 */
+	public void updateFilm(String pathFilm) {
+		LogText logText = new LogText(pathFilm,"log.txt");
 		logText.writeToFile("----------------------"+"\t"+new Date().toString()+"\t");
 		
-		//1]liste des fichiers de film
+		//1] liste des fichiers de film
 		System.out.println("1]========================== Parse dossier ==========================");
-		theMovieDb.listeFichier=theMovieDb.parseDossier(theMovieDb.pathFilm);
+		//this.listeFichier=this.parseDossier(pathFilm);
+		List<Fichier> listeFichier=null;
+		FileMAnager fileMAnager = new FileMAnager();
+		fileMAnager.parseDossier(pathFilm);	
+		listeFichier=fileMAnager.getListeFichiersFilm();		
 		
 
 		//2] Recherche du film sur TheMovieDb
@@ -71,11 +81,11 @@ public class TheMovieDb {
 		List<String> listeNomFilmPossible=null;
 		List<Film> filmListMatch1Fichier=null; 
 		
-		 for(int i=0; i<theMovieDb.listeFichier.size(); i++) {
-			 	nomFichier=theMovieDb.listeFichier.get(i).nom;
+		 for(int i=0; i<listeFichier.size(); i++) {
+			 	nomFichier=listeFichier.get(i).nom;
 			 	System.out.println("");
 	            System.out.println("2]==========================Fichier["+(i+1)+"]:[["+nomFichier+"]]==========================");
-	            FilmFichier filmFichierAnalyse= theMovieDb.extractNomFilm(nomFichier);
+	            FilmFichier filmFichierAnalyse= this.extractNomFilm(nomFichier);
 	            listeNomFilmPossible =filmFichierAnalyse.listeNomFilmPossible;
 	            //pourl'instant on prend le premier
 	            Film filmRico=null;
@@ -137,12 +147,12 @@ public class TheMovieDb {
 		            //====================================================
 		            //Downlaod de l'image du film
 		            //====================================================
-		            if(theMovieDb.DownloadImage==true) {
+		            if(this.DownloadImage==true) {
 			            if (image != null) { 
 				            if ( !image.equals("") ) {
 				            	//System.out.println("2.2] download image poster");
 				            	System.out.println("		==>2.4]download image poster==========================");
-				            	theMovieDb.downloadImage(image,theMovieDb.pathFilm,nomFichier.substring(0,nomFichier.length() - 4)+".jpg");
+				            	this.downloadImage(image,pathFilm,nomFichier.substring(0,nomFichier.length() - 4)+".jpg");
 				            	logText.writeToFile("===>OK" + "\t" +nomFichier+"\t"+filmRico.getTitle() );
 				            } else {
 				            	logText.writeToFile("===>OO" + "\t" +nomFichier+"\t"+filmRico.getTitle() +"\t"+"Pas d'image");
@@ -156,36 +166,41 @@ public class TheMovieDb {
 		            //====================================================
 		            //Mémorisation des infos du films dans une base MongoDB
 		            //====================================================
-		            if (theMovieDb.MemoDb==true) {		            			            	
+		            if (this.MemoDb==true) {		            			            	
 		            	//Recherche si l'id du film est déjà présent dans la bd
 		            	System.out.println("		==>2.5]Insertion DB==========================");
 		            	BasicDBObject whereQuery = new BasicDBObject();
 		     		    //whereQuery.put("id", filmRico.id);
 		            	whereQuery.put("RICO.file", nomFichier);
-		            	whereQuery.put("RICO.path", theMovieDb.pathFilm);
+		            	whereQuery.put("RICO.path", pathFilm);
 		     		    BasicDBObject fields = new BasicDBObject();
 		     		    fields.put("id", 1);
-		     		    int i_nb_matchBD= theMovieDb.mongoManager.selectDB("films", whereQuery, fields);
-		     		    if(i_nb_matchBD==0) {
-		     		    	System.out.println("			=>2.5]Insertion DB : film non deja existantdans DB==========================");
+		     		    int i_nb_matchBD= this.mongoManager.selectDB("films", whereQuery, fields);
+		     		    if(i_nb_matchBD==0 || (this.owerrideDB & i_nb_matchBD==1 )) {
+		     		    	if (this.owerrideDB & i_nb_matchBD==1){
+		     		    		System.out.println("			=>2.5]Insertion DB : film existant dans DB suppresion==================");
+		     		    		this.mongoManager.removeDB("films", whereQuery);
+		     		    	} else  {
+		     		    		System.out.println("			=>2.5]Insertion DB : film non deja existantdans DB==========================");
+		     		    	}
 		     		    	DBObject _DBObject= getFilmTheMovieDbDetail(filmRico.id);			     		    		     		    	
-		     		    	theMovieDb.mongoManager.insertJSON("films",_DBObject);
+		     		    	this.mongoManager.insertJSON("films",_DBObject);
 		     		    	
 		     		    	//Maj avec les infosspecifique du fichier
 		     		    	BasicDBObject query = new BasicDBObject();
 		     		    	query.put("_id", _DBObject.get( "_id" ));
 		     		    	//query.put("id", filmRico.id);
 		     		    	//query.put("RICO.file", nomFichier);
-		     		    	//query.put("RICO.path", theMovieDb.pathFilm);
+		     		    	//query.put("RICO.path", this.pathFilm);
 		     		    	BasicDBObject newDocument = new BasicDBObject();
 		     		    	newDocument.put("RICO.insertDate", new Date());
-			     			newDocument.put("RICO.path", theMovieDb.pathFilm);
+			     			newDocument.put("RICO.path", pathFilm);
 			     			newDocument.put("RICO.file", nomFichier);
-			     			newDocument.put("RICO.size", theMovieDb.listeFichier.get(i).taille);
-			     			newDocument.put("RICO.fileDate", theMovieDb.listeFichier.get(i).dateFile);
+			     			newDocument.put("RICO.size", listeFichier.get(i).taille);
+			     			newDocument.put("RICO.fileDate", listeFichier.get(i).dateFile);
 			     			BasicDBObject updateObj = new BasicDBObject();
 			     			updateObj.put("$set", newDocument);
-			     			theMovieDb.mongoManager.updateDB("films",query,updateObj);
+			     			this.mongoManager.updateDB("films",query,updateObj);
 		     		    	
 		     		    }else{
 		     		    	System.out.println("			=>2.5]Pas d'Insertion DB : deja existant==========================");
@@ -199,6 +214,13 @@ public class TheMovieDb {
 		        }
 		 }		
 		 
+		 System.out.println("=====Fin PATH "+pathFilm+" ========");
+		 List<String> listeDossierFilm = null;
+		 listeDossierFilm=fileMAnager.getListeDossierFilm();
+		 for(int i=0; i<listeDossierFilm.size(); i++) {
+			 this.updateFilm(listeDossierFilm.get(i)+"\\");
+		 }
+		
 		 System.out.println("=====Fin :-) ========");
 	}
 
@@ -206,19 +228,15 @@ public class TheMovieDb {
 	 *  Retrun les ficier de films d'un dossier!! 
 	 * @param path
 	 */
+	/*
 	List<Fichier> parseDossier(String path) {
 		List<Fichier> listeFichier=null;
-		//TODO 
-		
-		 
 		FileMAnager fileMAnager = new FileMAnager();
 		fileMAnager.initFilm(path);		
-		listeFichier= fileMAnager.listeFichiersFilm;
-		
-		return listeFichier;
-		
+		listeFichier= fileMAnager.listeFichiersFilm;		
+		return listeFichier;		
 	}
-	
+	*/
 	/**
 	 * 
 	 * @param listFichier
@@ -318,7 +336,7 @@ public class TheMovieDb {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		String sURL = "https://api.themoviedb.org/3/search/movie?api_key=bd5b73151b4a5a2ac5b34aca8bfe555a&language=en-US&query="+film+"&page=1&include_adult=false";
+		String sURL = "https://api.themoviedb.org/3/search/movie?api_key=bd5b73151b4a5a2ac5b34aca8bfe555a&language=fr&query="+film+"&page=1&include_adult=false";
 		System.out.println("	==>2.1]sURL(recherche)="+sURL);
 		String sReturn= UrlManager.getUrl( sURL);
 		System.out.println("		==>2.1]retour http :"+sReturn);
@@ -391,7 +409,7 @@ public class TheMovieDb {
 	 */
 	static DBObject getFilmTheMovieDbDetail(long  filmId ) {
 		//String sURL="https://api.themoviedb.org/3/movie/603?api_key=bd5b73151b4a5a2ac5b34aca8bfe555a&append_to_response=credits,videos"
-		String sURL = "https://api.themoviedb.org/3/movie/"+filmId+"?api_key=bd5b73151b4a5a2ac5b34aca8bfe555a&append_to_response=credits,videos";
+		String sURL = "https://api.themoviedb.org/3/movie/"+filmId+"?api_key=bd5b73151b4a5a2ac5b34aca8bfe555a&append_to_response=credits,videos&language=fr";
 		System.out.println("			==>2.5b]sURL(detail)="+sURL);
 		String sReturn= UrlManager.getUrl( sURL);
 		//System.out.println("	==>2.5c]sReturn(detail)="+sReturn);
